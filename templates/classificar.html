@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0"><i class="bi bi-tags"></i> Classificar lançamentos</h4>
+  <span class="badge bg-warning text-dark fs-6">{{ pendentes|length }} pendente(s)</span>
+</div>
+
+<!-- Lançamentos sem categoria -->
+{% if pendentes %}
+<div class="card mb-4">
+  <div class="card-header fw-semibold">
+    <i class="bi bi-exclamation-circle text-warning"></i> Aguardando classificação
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Data</th>
+            <th>Tipo</th>
+            <th>Descrição</th>
+            <th class="text-end">Valor (R$)</th>
+            <th style="min-width:220px">Categoria</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in pendentes %}
+          <tr>
+            <td class="text-nowrap">{{ l.data_lancamento.strftime('%d/%m/%Y') }}</td>
+            <td>
+              {% if l.trntype == 'CREDIT' %}
+                <span class="badge bg-success">CRÉDITO</span>
+              {% else %}
+                <span class="badge bg-danger">DÉBITO</span>
+              {% endif %}
+            </td>
+            <td>{{ l.memo }}</td>
+            <td class="text-end fw-bold {% if l.valor > 0 %}text-success{% else %}text-danger{% endif %}">
+              {{ "%.2f"|format(l.valor) }}
+            </td>
+            <td>
+              <form method="POST" action="{{ url_for('classificar_post', lancamento_id=l.id) }}"
+                    class="d-flex gap-2">
+                <select name="categoria_id" class="form-select form-select-sm" required>
+                  <option value="">-- selecione --</option>
+                  <optgroup label="RECEITAS">
+                    {% for c in categorias if c.tipo == 'RECEITA' %}
+                    <option value="{{ c.id }}">{{ c.nome }}</option>
+                    {% endfor %}
+                  </optgroup>
+                  <optgroup label="DESPESAS">
+                    {% for c in categorias if c.tipo == 'DESPESA' %}
+                    <option value="{{ c.id }}">{{ c.nome }}</option>
+                    {% endfor %}
+                  </optgroup>
+                </select>
+                <button type="submit" class="btn btn-sm btn-success text-nowrap">
+                  <i class="bi bi-check-lg"></i> Salvar
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-success d-flex align-items-center gap-2 mb-4">
+  <i class="bi bi-check-circle-fill fs-5"></i>
+  <span>Todos os lançamentos estão classificados!</span>
+</div>
+{% endif %}
+
+<!-- Histórico classificado -->
+{% set classificados = todos | selectattr('categoria_id') | list %}
+{% if classificados %}
+<div class="card">
+  <div class="card-header fw-semibold">
+    <i class="bi bi-check2-all text-success"></i> Já classificados ({{ classificados|length }})
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Data</th>
+            <th>Descrição</th>
+            <th class="text-end">Valor (R$)</th>
+            <th>Categoria</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in classificados %}
+          <tr>
+            <td class="text-nowrap">{{ l.data_lancamento.strftime('%d/%m/%Y') }}</td>
+            <td>{{ l.memo }}</td>
+            <td class="text-end {% if l.valor > 0 %}text-success{% else %}text-danger{% endif %}">
+              {{ "%.2f"|format(l.valor) }}
+            </td>
+            <td>
+              <span class="badge {% if l.categoria_tipo == 'RECEITA' %}bg-success{% else %}bg-secondary{% endif %}">
+                {{ l.categoria_nome }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

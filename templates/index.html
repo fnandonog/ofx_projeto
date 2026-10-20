@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h4 class="mb-4"><i class="bi bi-speedometer2"></i> Dashboard</h4>
+
+<!-- KPIs -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card stat-card p-3" style="border-color:#0d6efd">
+      <div class="text-muted small">Total de lançamentos</div>
+      <div class="fs-3 fw-bold text-primary">{{ stats.total }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card p-3" style="border-color:#ffc107">
+      <div class="text-muted small">Sem categoria</div>
+      <div class="fs-3 fw-bold text-warning">{{ stats.sem_categoria }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card p-3" style="border-color:#198754">
+      <div class="text-muted small">Total Receitas</div>
+      <div class="fs-3 fw-bold text-success">R$ {{ "%.2f"|format(stats.receitas) }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card p-3" style="border-color:#dc3545">
+      <div class="text-muted small">Total Despesas</div>
+      <div class="fs-3 fw-bold text-danger">R$ {{ "%.2f"|format(stats.despesas) }}</div>
+    </div>
+  </div>
+</div>
+
+{% if stats.sem_categoria > 0 %}
+<div class="alert alert-warning d-flex align-items-center gap-2">
+  <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+  <span>
+    <strong>{{ stats.sem_categoria }} lançamento(s)</strong> ainda sem categoria.
+    <a href="{{ url_for('classificar') }}" class="alert-link">Classificar agora →</a>
+  </span>
+</div>
+{% endif %}
+
+<!-- Tabela -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-list-ul"></i> Lançamentos importados</span>
+    <a href="{{ url_for('upload') }}" class="btn btn-sm btn-primary">
+      <i class="bi bi-upload"></i> Novo arquivo
+    </a>
+  </div>
+  <div class="card-body p-0">
+    {% if lancamentos %}
+    <div class="table-responsive">
+      <table class="table table-hover table-sm mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Data</th>
+            <th>Conta</th>
+            <th>Tipo</th>
+            <th>Descrição</th>
+            <th class="text-end">Valor (R$)</th>
+            <th>Categoria</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in lancamentos %}
+          <tr>
+            <td class="text-nowrap">{{ l.data_lancamento.strftime('%d/%m/%Y') }}</td>
+            <td><small class="text-muted">{{ l.acct_id }}</small></td>
+            <td>
+              {% if l.trntype == 'CREDIT' %}
+                <span class="badge bg-success">CRÉDITO</span>
+              {% else %}
+                <span class="badge bg-danger">DÉBITO</span>
+              {% endif %}
+            </td>
+            <td>{{ l.memo }}</td>
+            <td class="text-end fw-bold
+                {% if l.valor > 0 %}text-success{% else %}text-danger{% endif %}">
+              {{ "%.2f"|format(l.valor) }}
+            </td>
+            <td>
+              {% if l.categoria_nome %}
+                <span class="badge
+                  {% if l.categoria_tipo == 'RECEITA' %}bg-success{% else %}bg-secondary{% endif %}">
+                  {{ l.categoria_nome }}
+                </span>
+              {% else %}
+                <a href="{{ url_for('classificar') }}" class="badge bg-warning text-dark text-decoration-none">
+                  Classificar
+                </a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-inbox fs-1"></i>
+      <p class="mt-2">Nenhum lançamento ainda.
+        <a href="{{ url_for('upload') }}">Importe um arquivo OFX.</a>
+      </p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

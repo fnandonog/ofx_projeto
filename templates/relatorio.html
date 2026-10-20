@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h4 class="mb-4"><i class="bi bi-bar-chart-line"></i> Relatório por categoria</h4>
+
+{% if dados %}
+
+{% set receitas = dados | selectattr('tipo', 'eq', 'RECEITA') | list %}
+{% set despesas = dados | selectattr('tipo', 'eq', 'DESPESA') | list %}
+
+<div class="row g-4">
+  <!-- Receitas -->
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-success text-white fw-semibold">
+        <i class="bi bi-arrow-down-circle"></i> Receitas
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Categoria</th>
+              <th class="text-center">Qtd</th>
+              <th class="text-end">Total (R$)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in receitas %}
+            <tr>
+              <td>{{ r.nome }}</td>
+              <td class="text-center">{{ r.qtd }}</td>
+              <td class="text-end text-success fw-bold">{{ "%.2f"|format(r.total) }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="text-muted text-center">Nenhuma receita classificada.</td></tr>
+            {% endfor %}
+          </tbody>
+          {% if receitas %}
+          <tfoot class="table-success">
+            <tr>
+              <td><strong>Total</strong></td>
+              <td class="text-center"><strong>{{ receitas | sum(attribute='qtd') }}</strong></td>
+              <td class="text-end"><strong>R$ {{ "%.2f"|format(receitas | sum(attribute='total')) }}</strong></td>
+            </tr>
+          </tfoot>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Despesas -->
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-danger text-white fw-semibold">
+        <i class="bi bi-arrow-up-circle"></i> Despesas
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Categoria</th>
+              <th class="text-center">Qtd</th>
+              <th class="text-end">Total (R$)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in despesas %}
+            <tr>
+              <td>{{ d.nome }}</td>
+              <td class="text-center">{{ d.qtd }}</td>
+              <td class="text-end text-danger fw-bold">{{ "%.2f"|format(d.total | abs) }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="text-muted text-center">Nenhuma despesa classificada.</td></tr>
+            {% endfor %}
+          </tbody>
+          {% if despesas %}
+          <tfoot class="table-danger">
+            <tr>
+              <td><strong>Total</strong></td>
+              <td class="text-center"><strong>{{ despesas | sum(attribute='qtd') }}</strong></td>
+              <td class="text-end"><strong>R$ {{ "%.2f"|format(despesas | sum(attribute='total') | abs) }}</strong></td>
+            </tr>
+          </tfoot>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Resultado líquido -->
+{% if receitas and despesas %}
+{% set total_rec = receitas | sum(attribute='total') %}
+{% set total_des = despesas | sum(attribute='total') | abs %}
+{% set liquido = total_rec - total_des %}
+<div class="card mt-4">
+  <div class="card-body text-center py-4">
+    <h5 class="text-muted mb-1">Resultado Líquido (classificados)</h5>
+    <div class="display-5 fw-bold {% if liquido >= 0 %}text-success{% else %}text-danger{% endif %}">
+      R$ {{ "%.2f"|format(liquido) }}
+    </div>
+    <small class="text-muted">Receitas − Despesas classificadas</small>
+  </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5 text-muted">
+  <i class="bi bi-bar-chart fs-1"></i>
+  <p class="mt-2">Nenhum dado classificado ainda.
+    <a href="{{ url_for('classificar') }}">Classificar lançamentos →</a>
+  </p>
+</div>
+{% endif %}
+
+{% endblock %}
